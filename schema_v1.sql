@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- MESSAGES:       ID, DMCHANNELID, CHANNELID, CONTENT, SENT_TIMESTAMP 
 -- DMCHANNELS:     ID
 -- DMCHANNELUSERS: PARENT_ID, USER_ID
+-- GUILDUSERS:     PARENT_ID, USER_ID
 -- -- -- -- -- -- 
 
 CREATE TABLE IF NOT EXISTS channels (
@@ -78,7 +79,7 @@ CREATE TABLE messages (
 
   PRIMARY KEY (id),
   FOREIGN KEY (DMChannelID) REFERENCES DMChannels(id),   -- DM channel
-  FOREIGN KEY (channelID) REFERENCES channels(guild_id), -- Channel
+  FOREIGN KEY (channelID) REFERENCES channels(id), -- Channel
   FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL, -- User
   CONSTRAINT checkmessagesbeforerun CHECK (ISNULL(DMChannelID) + ISNULL(channelID) = 1) -- Exactly 1 parent ID exists
 );
@@ -90,7 +91,7 @@ CREATE TABLE messages (
 
 
 -- -- -- -- -- -- Special clarification is needed for all of this, even if only for myself.
-CREATE TABLE guildPermissions ( -- On creation of every role, this table should be populated with data, this data is for GUILD WIDE PERMS only.
+CREATE TABLE rolePermissions ( -- On creation of every role, this table should be populated with data, this data is for GUILD WIDE PERMS only.
                                 -- On creation of the GUILD, this table should be ppopulated with the DEFAULT permissions for a DEFAULT role.
   guildID bigint unsigned,                   -- The guild .
   roleID bigint unsigned,                    -- The role thats getting permissions.
@@ -118,6 +119,14 @@ CREATE TABLE guildPermissions ( -- On creation of every role, this table should 
 
 
 
+
+
+-- -- -- -- -- --
+-- ROLES:                       GUILD_ID, ID, _NAME
+-- PENDINGFRIENDREQUESTS:       ID, DMCHANNELID, CHANNELID, CONTENT, SENT_TIMESTAMP 
+-- FRIENDS:                      ID
+-- -- -- -- -- -- 
+
 CREATE TABLE roles (
   guildID bigint unsigned,  
   id bigint unsigned NOT NULL, 
@@ -127,4 +136,28 @@ CREATE TABLE roles (
   PRIMARY KEY (guildID, id),
   FOREIGN KEY (parent_id) REFERENCES DMChannels(id),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+
+CREATE TABLE pendingFriendRequests (
+  outgoingUserID bigint unsigned NOT NULL,
+  incomingUserID bigint unsigned NOT NULL,
+  start_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
+
+  PRIMARY KEY (outgoingUserID, incomingUserID),
+  FOREIGN KEY (outgoingUserID) REFERENCES users(id),
+  FOREIGN KEY (incomingUserID) REFERENCES users(id)
+);
+
+
+
+CREATE TABLE friends (
+  userOneID bigint unsigned NOT NULL,
+  userTwoID bigint unsigned NOT NULL,
+  start_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
+
+  PRIMARY KEY (userOneID, userTwoID),
+  FOREIGN KEY (userOneID) REFERENCES users(id),
+  FOREIGN KEY (userTwoID) REFERENCES users(id)
 );
