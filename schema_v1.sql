@@ -71,17 +71,17 @@ CREATE TABLE guildUsers (
 
 CREATE TABLE messages (
   id bigint unsigned NOT NULL,
-  authorID bigint unsigned NOT NULL,
-  DMChannelID bigint unsigned, -- It can either be a DM/DM Channel
-  channelID bigint unsigned,   -- Or it can be a regular channel
+  authorID bigint unsigned,                 -- Node: it can also be a user, completely bypassing the need for either of the below.
+  DMChannelID bigint unsigned DEFAULT NULL, -- It can either be a DM Channel
+  channelID bigint unsigned DEFAULT NULL,   -- Or it can be a regular channel
   content text NOT NULL,
   sent_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
 
   PRIMARY KEY (id),
-  FOREIGN KEY (DMChannelID) REFERENCES DMChannels(id),   -- DM channel
-  FOREIGN KEY (channelID) REFERENCES channels(id), -- Channel
-  FOREIGN KEY (authorID) REFERENCES users(id), -- User
-  CONSTRAINT checkmessagesbeforerun CHECK (ISNULL(DMChannelID) + ISNULL(channelID) = 1) -- Exactly 1 parent ID exists
+  FOREIGN KEY (DMChannelID) REFERENCES DMChannels(id) ON DELETE SET NULL,   -- DM channel
+  FOREIGN KEY (channelID) REFERENCES channels(id) ON DELETE SET NULL, -- Channel
+  FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL, -- User
+  CONSTRAINT checkmessagesbeforerun CHECK (ISNULL(DMChannelID) + ISNULL(channelID) + ISNULL(authorID) = 2) -- Atleast 1 parent ID exists
 );
 
 
