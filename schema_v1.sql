@@ -80,7 +80,7 @@ CREATE TABLE messages (
   PRIMARY KEY (id),
   FOREIGN KEY (DMChannelID) REFERENCES DMChannels(id),   -- DM channel
   FOREIGN KEY (channelID) REFERENCES channels(id), -- Channel
-  FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL, -- User
+  FOREIGN KEY (authorID) REFERENCES users(id), -- User
   CONSTRAINT checkmessagesbeforerun CHECK (ISNULL(DMChannelID) + ISNULL(channelID) = 1) -- Exactly 1 parent ID exists
 );
 
