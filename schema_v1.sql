@@ -13,12 +13,13 @@ CREATE TABLE IF NOT EXISTS guilds (
 );
 CREATE TABLE IF NOT EXISTS users (
   id bigint unsigned NOT NULL,
-  _name text NOT NULL,
+  _name varchar(255) NOT NULL,
+  discrim varchar(6) NOT NULL, -- Limit discrims for 6 digits, if we reach limits with this; theres a problem above concerns of just adding more numbers to it, it will kinda serve as a reminder to implement some kinda friend code system.
   authentication TEXT NOT NULL,
   salt TEXT NOT NULL,
   created_at bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
   -- TODO: discriminator
-  PRIMARY KEY (id)
+  PRIMARY KEY (id, discrim)
 );
 
 
@@ -72,7 +73,7 @@ CREATE TABLE guildUsers (
 CREATE TABLE messages (
   id bigint unsigned NOT NULL,
   authorID bigint unsigned,
-  userID bigint unsigned DEFAULT NULL     -- Note: it can also be a user, completely bypassing the need for either of the below.
+  userID bigint unsigned DEFAULT NULL,     -- Note: it can also be a user, completely bypassing the need for either of the below.
   DMChannelID bigint unsigned DEFAULT NULL, -- It can either be a DM Channel
   channelID bigint unsigned DEFAULT NULL,   -- Or it can be a regular channel
   content text NOT NULL,
