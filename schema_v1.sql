@@ -1,7 +1,7 @@
 -- -- -- -- -- --
 -- GUILD: ID, OWNER_ID, _NAME
 -- USER: ID, _NAME
--- -- -- -- -- -- 
+-- -- -- -- -- --
 
 
 CREATE TABLE IF NOT EXISTS guilds (
@@ -25,11 +25,11 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- -- -- -- -- --
 -- CHANNELS:       GUILD_ID, ID, _NAME
--- MESSAGES:       ID, DMCHANNELID, CHANNELID, CONTENT, SENT_TIMESTAMP 
+-- MESSAGES:       ID, DMCHANNELID, CHANNELID, CONTENT, SENT_TIMESTAMP
 -- DMCHANNELS:     ID
 -- DMCHANNELUSERS: PARENT_ID, USER_ID
 -- GUILDUSERS:     PARENT_ID, USER_ID
--- -- -- -- -- -- 
+-- -- -- -- -- --
 
 CREATE TABLE IF NOT EXISTS channels (
   guild_id bigint unsigned,
@@ -44,6 +44,15 @@ CREATE TABLE IF NOT EXISTS channels (
   CONSTRAINT permadelete CHECK (ISNULL(old_guild_id) + ISNULL(delete_after_timestamp) IN (0, 2)) -- If a channel is detached, it must have a set deletion time
 );
 
+CREATE TABLE DMs (
+  id bigint unsigned NOT NULL,
+  UserOneID  bigint unsigned, -- If any of the user IDs are null, then the account has been deleted.
+  UserTwoID bigint unsigned,
+
+  FOREIGN KEY (UserOneID) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (UserTwoID) REFERENCES users(id) ON DELETE SET NULL,
+  PRIMARY KEY (id)
+);
 
 CREATE TABLE DMChannels (
   id bigint unsigned NOT NULL,
@@ -70,21 +79,44 @@ CREATE TABLE guildUsers (
 );
 
 
-CREATE TABLE messages (
+
+
+
+CREATE TABLE DMmessages ( -- This table is for DM  messages
   id bigint unsigned NOT NULL,
   authorID bigint unsigned,
-  userID bigint unsigned DEFAULT NULL,     -- Note: it can also be a user, completely bypassing the need for either of the below.
-  DMChannelID bigint unsigned DEFAULT NULL, -- It can either be a DM Channel
-  channelID bigint unsigned DEFAULT NULL,   -- Or it can be a regular channel
+  DmID bigint unsigned,
   content text NOT NULL,
   sent_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
 
   PRIMARY KEY (id),
-  FOREIGN KEY (DMChannelID) REFERENCES DMChannels(id) ON DELETE SET NULL,   -- DM channel
-  FOREIGN KEY (channelID) REFERENCES channels(id) ON DELETE SET NULL, -- Channel
-  FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL, -- Author
-  FOREIGN KEY (userID) REFERENCES users(id) ON DELETE SET NULL, -- User (message was sent straight to user)
-  CONSTRAINT checkmessagesbeforerun CHECK (ISNULL(DMChannelID) + ISNULL(channelID) + ISNULL(authorID) = 2) -- Atleast 1 parent ID exists
+  FOREIGN KEY (DmID) REFERENCES DMs(id),
+  FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL -- Author
+);
+
+CREATE TABLE DMChannelmessages ( -- This table is for DMChannel messages
+  id bigint unsigned NOT NULL,
+  authorID bigint unsigned,
+  DMChannelID bigint unsigned NOT NULL, -- This, unlike author IDs, cannot be null; if the channel is deleted then CASCADE
+  content text NOT NULL,
+  sent_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
+
+  PRIMARY KEY (id),
+  FOREIGN KEY (DMChannelID) REFERENCES DMChannels(id) ON DELETE CASCADE, -- Channel
+  FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL -- Author
+);
+
+
+CREATE TABLE messages (
+  id bigint unsigned NOT NULL,
+  authorID bigint unsigned,
+  channelID bigint unsigned NOT NULL,   -- Channel
+  content text NOT NULL,
+  sent_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
+
+  PRIMARY KEY (id),
+  FOREIGN KEY (channelID) REFERENCES channels(id) ON DELETE CASCADE, -- Channel
+  FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL -- Author
 );
 
 
@@ -118,7 +150,7 @@ CREATE TABLE rolePermissions ( -- On creation of every role, this table should b
   PRIMARY KEY (guildID, roleID),
   FOREIGN KEY (guildID) REFERENCES guilds(id) ON DELETE CASCADE,  -- Guild deleted, set the guild to NULL
 );
--- -- -- -- -- -- 
+-- -- -- -- -- --
 
 
 
@@ -126,13 +158,13 @@ CREATE TABLE rolePermissions ( -- On creation of every role, this table should b
 
 -- -- -- -- -- --
 -- ROLES:                       GUILD_ID, ID, _NAME
--- PENDINGFRIENDREQUESTS:       ID, DMCHANNELID, CHANNELID, CONTENT, SENT_TIMESTAMP 
+-- PENDINGFRIENDREQUESTS:       ID, DMCHANNELID, CHANNELID, CONTENT, SENT_TIMESTAMP
 -- FRIENDS:                      ID
--- -- -- -- -- -- 
+-- -- -- -- -- --
 
 CREATE TABLE roles (
-  guildID bigint unsigned,  
-  id bigint unsigned NOT NULL, 
+  guildID bigint unsigned,
+  id bigint unsigned NOT NULL,
   _name text NOT NULL,
 
 
