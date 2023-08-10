@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS channels (
   CONSTRAINT permadelete CHECK (ISNULL(old_guild_id) + ISNULL(delete_after_timestamp) IN (0, 2)) -- If a channel is detached, it must have a set deletion time
 );
 
-CREATE TABLE DMs (
+CREATE TABLE IF NOT EXISTS DMs (
   id bigint unsigned NOT NULL,
   UserOneID  bigint unsigned, -- If any of the user IDs are null, then the account has been deleted.
   UserTwoID bigint unsigned,
@@ -54,13 +54,13 @@ CREATE TABLE DMs (
   PRIMARY KEY (id)
 );
 
-CREATE TABLE DMChannels (
+CREATE TABLE IF NOT EXISTS DMChannels (
   id bigint unsigned NOT NULL,
 
   PRIMARY KEY (id)
 );
 
-CREATE TABLE DMchannelUsers (
+CREATE TABLE IF NOT EXISTS DMchannelUsers (
   parent_id bigint unsigned NOT NULL, -- This would be the DM Channel's ID
   user_id bigint unsigned NOT NULL,
 
@@ -69,7 +69,7 @@ CREATE TABLE DMchannelUsers (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE guildUsers (
+CREATE TABLE IF NOT EXISTS guildUsers (
   parent_id bigint unsigned NOT NULL, -- This would be the guild's ID
   user_id bigint unsigned NOT NULL,
 
@@ -82,7 +82,7 @@ CREATE TABLE guildUsers (
 
 
 
-CREATE TABLE DMmessages ( -- This table is for DM  messages
+CREATE TABLE IF NOT EXISTS DMmessages ( -- This table is for DM  messages
   id bigint unsigned NOT NULL,
   authorID bigint unsigned,
   DmID bigint unsigned,
@@ -94,7 +94,7 @@ CREATE TABLE DMmessages ( -- This table is for DM  messages
   FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE SET NULL -- Author
 );
 
-CREATE TABLE DMChannelmessages ( -- This table is for DMChannel messages
+CREATE TABLE IF NOT EXISTS DMChannelmessages ( -- This table is for DMChannel messages
   id bigint unsigned NOT NULL,
   authorID bigint unsigned,
   DMChannelID bigint unsigned NOT NULL, -- This, unlike author IDs, cannot be null; if the channel is deleted then CASCADE
@@ -107,7 +107,7 @@ CREATE TABLE DMChannelmessages ( -- This table is for DMChannel messages
 );
 
 
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
   id bigint unsigned NOT NULL,
   authorID bigint unsigned,
   channelID bigint unsigned NOT NULL,   -- Channel
@@ -126,7 +126,7 @@ CREATE TABLE messages (
 
 
 -- -- -- -- -- -- Special clarification is needed for all of this, even if only for myself.
-CREATE TABLE rolePermissions ( -- On creation of every role, this table should be populated with data, this data is for GUILD WIDE PERMS only.
+CREATE TABLE IF NOT EXISTS rolePermissions ( -- On creation of every role, this table should be populated with data, this data is for GUILD WIDE PERMS only.
                                 -- On creation of the GUILD, this table should be ppopulated with the DEFAULT permissions for a DEFAULT role.
   guildID bigint unsigned,                   -- The guild .
   roleID bigint unsigned,                    -- The role thats getting permissions.
@@ -148,7 +148,7 @@ CREATE TABLE rolePermissions ( -- On creation of every role, this table should b
 
 
   PRIMARY KEY (guildID, roleID),
-  FOREIGN KEY (guildID) REFERENCES guilds(id) ON DELETE CASCADE,  -- Guild deleted, set the guild to NULL
+  FOREIGN KEY (guildID) REFERENCES guilds(id) ON DELETE CASCADE  -- Guild deleted, set the guild to NULL
 );
 -- -- -- -- -- --
 
@@ -162,20 +162,18 @@ CREATE TABLE rolePermissions ( -- On creation of every role, this table should b
 -- FRIENDS:                      ID
 -- -- -- -- -- --
 
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
   guildID bigint unsigned,
   id bigint unsigned NOT NULL,
   _name text NOT NULL,
 
 
-  PRIMARY KEY (guildID, id),
-  FOREIGN KEY (parent_id) REFERENCES DMChannels(id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  PRIMARY KEY (guildID, id)
 );
 
 
 
-CREATE TABLE pendingFriendRequests (
+CREATE TABLE IF NOT EXISTS pendingFriendRequests (
   outgoingUserID bigint unsigned NOT NULL,
   incomingUserID bigint unsigned NOT NULL,
   start_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
@@ -187,7 +185,7 @@ CREATE TABLE pendingFriendRequests (
 
 
 
-CREATE TABLE friends (
+CREATE TABLE IF NOT EXISTS friends (
   userOneID bigint unsigned NOT NULL,
   userTwoID bigint unsigned NOT NULL,
   start_timestamp bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
