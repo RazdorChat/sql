@@ -7,11 +7,18 @@
 CREATE TABLE IF NOT EXISTS users (
   id bigint unsigned NOT NULL,
   _name varchar(255) NOT NULL,
-  discrim varchar(6) NOT NULL, -- Limit discrims for 6 digits, if we reach limits with this; theres a problem above concerns of just adding more numbers to it, it will kinda serve as a reminder to implement some kinda friend code system.
+	discrim_prefix tinyint unsigned NOT NULL, -- 2 digit prefix used for 6 digit discrims, otherwise 0
+  discrim smallint unsigned NOT NULL,
   authentication TEXT NOT NULL,
   salt TEXT NOT NULL,
   created_at bigint unsigned NOT NULL DEFAULT UNIX_TIMESTAMP(),
-  PRIMARY KEY (id)
+  PRIMARY KEY (id),
+	-- Note that this key requires queries to always include discrim_prefix to be indexed
+	UNIQUE KEY (_name, discrim_prefix, discrim),
+	-- Enforce 4/6 digit discriminator sizes
+	CONSTRAINT discrim_size CHECK (discrim < 10000
+		AND (discrim_prefix >= 10 OR discrim_prefix = 0)
+		AND discrim_prefix < 100)
 );
 
 CREATE TABLE IF NOT EXISTS guilds (
